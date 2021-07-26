@@ -2,13 +2,13 @@ const { User } = require('../models');
 
 const resolvers = {
   Query: {
-    getSingleUser: async (parent, args, context) => {
+    getSingleUser: async (parent, { user = null, params }, context) => {
         const foundUser = await User.findOne({
-          $or: [{ _id: args.user ? args.user._id : args.params.id }, { username: args.params.username }],
+          $or: [{ _id: user ? user._id : params.id }, { username: params.username }],
         });
     
         if (!foundUser) {
-          return res.status(400).json({ message: 'Cannot find a user with this id!' });
+          return 'Cannot find a user with this id!';
         }
       }
   },
@@ -19,7 +19,7 @@ const resolvers = {
         const token = signToken(user);
         return { token, user };
       },
-      login: async(parent, args, context) => {
+      login: async(parent, { email, password }, context) => {
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -36,11 +36,24 @@ const resolvers = {
 
         return { token, user };
       },
-      saveBook: async(parent, args, context) => {
-
+      saveBook: async(parent, { user, body }, context) => {
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: user._id },
+            { $addToSet: { savedBooks: body } },
+            { new: true, runValidators: true }
+        );
+        return updatedUser;
       },
-      deleteBook: async(parent, args, context) => {
-
+      deleteBook: async(parent, { user, params }, context) => {
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: user._id },
+            { $pull: { savedBooks: { bookId: params.bookId } } },
+            { new: true }
+        );
+        if (!updatedUser) {
+            return "Couldn't find user with this id!";
+        }
+        return updatedUser;
       }
   },
 };
