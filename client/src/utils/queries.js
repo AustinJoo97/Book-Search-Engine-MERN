@@ -17,3 +17,18 @@ export const GET_SINGLE_USER = gql`
         }
     }
 `;
+
+export const QUERY_ME = gql`
+  query getMe {
+    getMe {
+      _id
+      firstName
+      lastName
+      username
+      email
+      location
+      bio
+      proPic
+    }
+  }
+`;
